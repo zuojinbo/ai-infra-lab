@@ -1,0 +1,3 @@
+# Python >=3.10; original experiment: Python 3.10.12
+pyarrow==25.0.1
+psutil==7.2.2

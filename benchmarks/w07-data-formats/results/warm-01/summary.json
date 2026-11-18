@@ -1,0 +1,1623 @@
+{
+  "environment": {
+    "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+    "python_executable": "/root/data-formats-lab/.venv/bin/python",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "pyarrow_version": "25.0.1",
+    "psutil_version": "7.2.2",
+    "os_cpu_count": 16
+  },
+  "limits": {
+    "use_threads": false,
+    "pyarrow_cpu_count": 1,
+    "pyarrow_io_thread_count": 1,
+    "parquet_memory_map": false,
+    "parquet_pre_buffer": false,
+    "arrow_ipc_source": "pa.OSFile (not mmap) + open_file().read_all()",
+    "csv_explicit_schema": true,
+    "sample_interval_ms": 2,
+    "note": "各读取路径均显式 use_threads=False，避免默认线程数不同造成混淆。"
+  },
+  "cache_definition": "warm：每个 worker 启动前，由父进程将该目标文件按 8MiB 块顺序读到 EOF，依赖操作系统页缓存。不做文件哈希。这不是磁盘冷读；若刚运行过 generate_data.py，文件本来就很可能已经在页缓存中。",
+  "data_dir": "/root/data-formats-lab/data",
+  "manifest_path": "/root/data-formats-lab/data/manifest.json",
+  "manifest_rows": 1000000,
+  "manifest_seed": 42,
+  "writer_config": {
+    "csv": {
+      "filename": "orders.csv",
+      "compression": null,
+      "include_header": true
+    },
+    "parquet": {
+      "filename": "orders.parquet",
+      "compression": "NONE",
+      "row_group_size": 100000,
+      "use_dictionary": true,
+      "note": "已关闭压缩，但 PyArrow 默认仍可能对列使用字典/RLE 等编码；因此本轮比较的是三套格式及其默认编码，不是纯行式/列式布局对照。"
+    },
+    "arrow_ipc": {
+      "filename": "orders.arrow",
+      "format": "Arrow IPC file (random access)",
+      "compression": null
+    }
+  },
+  "files": {
+    "csv": {
+      "name": "orders.csv",
+      "bytes": 47669461,
+      "mib": 45.461140632629395,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 47669461
+    },
+    "parquet": {
+      "name": "orders.parquet",
+      "bytes": 34749755,
+      "mib": 33.13994884490967,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 34749755
+    },
+    "arrow_ipc": {
+      "name": "orders.arrow",
+      "bytes": 52005394,
+      "mib": 49.596208572387695,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 52005394
+    }
+  },
+  "seed": 42,
+  "runs_per_format": 5,
+  "schedule": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "format": "parquet"
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "format": "csv"
+    },
+    {
+      "trial": 3,
+      "rep": 1,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 5,
+      "rep": 2,
+      "format": "parquet"
+    },
+    {
+      "trial": 6,
+      "rep": 2,
+      "format": "csv"
+    },
+    {
+      "trial": 7,
+      "rep": 3,
+      "format": "parquet"
+    },
+    {
+      "trial": 8,
+      "rep": 3,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 9,
+      "rep": 3,
+      "format": "csv"
+    },
+    {
+      "trial": 10,
+      "rep": 4,
+      "format": "parquet"
+    },
+    {
+      "trial": 11,
+      "rep": 4,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 12,
+      "rep": 4,
+      "format": "csv"
+    },
+    {
+      "trial": 13,
+      "rep": 5,
+      "format": "parquet"
+    },
+    {
+      "trial": 14,
+      "rep": 5,
+      "format": "csv"
+    },
+    {
+      "trial": 15,
+      "rep": 5,
+      "format": "arrow_ipc"
+    }
+  ],
+  "trials": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 1.5392510369999854,
+      "digest_s": 0.07219089699992765,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 60084224,
+      "rss_end_bytes": 180883456,
+      "rss_end_delta_bytes": 120799232,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 176644,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 180883456,
+      "sampled_peak_rss_bytes": 188297216,
+      "sampled_rss_sample_count": 767,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 2.7387754250000853
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.1234397059999992,
+      "digest_s": 0.06258595300005254,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000368,
+      "rss_baseline_bytes": 60190720,
+      "rss_end_bytes": 145375232,
+      "rss_end_delta_bytes": 85184512,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 141968,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 145375232,
+      "sampled_peak_rss_bytes": 152596480,
+      "sampled_rss_sample_count": 96,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2909202309999728
+    },
+    {
+      "trial": 3,
+      "rep": 1,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.011691411999890988,
+      "digest_s": 0.06187641900010021,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000080,
+      "rss_baseline_bytes": 60133376,
+      "rss_end_bytes": 119799808,
+      "rss_end_delta_bytes": 59666432,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 116992,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 119799808,
+      "sampled_peak_rss_bytes": 125149184,
+      "sampled_rss_sample_count": 43,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.17463532000010673
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.011382242999843584,
+      "digest_s": 0.06082613300009143,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000080,
+      "rss_baseline_bytes": 60399616,
+      "rss_end_bytes": 119939072,
+      "rss_end_delta_bytes": 59539456,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 117128,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 119939072,
+      "sampled_peak_rss_bytes": 126074880,
+      "sampled_rss_sample_count": 42,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.1738135539999348
+    },
+    {
+      "trial": 5,
+      "rep": 2,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.047385778000034406,
+      "digest_s": 0.0563397140001598,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 60268544,
+      "rss_end_bytes": 181047296,
+      "rss_end_delta_bytes": 120778752,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 176804,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 181047296,
+      "sampled_peak_rss_bytes": 188502016,
+      "sampled_rss_sample_count": 57,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.20360869999990427
+    },
+    {
+      "trial": 6,
+      "rep": 2,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.1160389199999372,
+      "digest_s": 0.06491965700001856,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000368,
+      "rss_baseline_bytes": 60264448,
+      "rss_end_bytes": 145391616,
+      "rss_end_delta_bytes": 85127168,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 141984,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 145391616,
+      "sampled_peak_rss_bytes": 152612864,
+      "sampled_rss_sample_count": 94,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2822551320000457
+    },
+    {
+      "trial": 7,
+      "rep": 3,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.05409447800002454,
+      "digest_s": 0.06240126300008342,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 60268544,
+      "rss_end_bytes": 180916224,
+      "rss_end_delta_bytes": 120647680,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 176676,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 180916224,
+      "sampled_peak_rss_bytes": 188723200,
+      "sampled_rss_sample_count": 63,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.21846304499990765
+    },
+    {
+      "trial": 8,
+      "rep": 3,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.011807592000195655,
+      "digest_s": 0.06104125499996371,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000080,
+      "rss_baseline_bytes": 60137472,
+      "rss_end_bytes": 119803904,
+      "rss_end_delta_bytes": 59666432,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 116996,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 119803904,
+      "sampled_peak_rss_bytes": 125059072,
+      "sampled_rss_sample_count": 42,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.1730766450000374
+    },
+    {
+      "trial": 9,
+      "rep": 3,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.11443273600002613,
+      "digest_s": 0.06081173500001569,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000368,
+      "rss_baseline_bytes": 60268544,
+      "rss_end_bytes": 145264640,
+      "rss_end_delta_bytes": 84996096,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 141860,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 145264640,
+      "sampled_peak_rss_bytes": 153219072,
+      "sampled_rss_sample_count": 91,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2769583019999118
+    },
+    {
+      "trial": 10,
+      "rep": 4,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.06312552700001106,
+      "digest_s": 0.06280319799998324,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 60133376,
+      "rss_end_bytes": 180826112,
+      "rss_end_delta_bytes": 120692736,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 176588,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 180826112,
+      "sampled_peak_rss_bytes": 188149760,
+      "sampled_rss_sample_count": 67,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2252253239998936
+    },
+    {
+      "trial": 11,
+      "rep": 4,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.010525518000122247,
+      "digest_s": 0.060968509999838716,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000080,
+      "rss_baseline_bytes": 60141568,
+      "rss_end_bytes": 119803904,
+      "rss_end_delta_bytes": 59662336,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 116996,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 119803904,
+      "sampled_peak_rss_bytes": 124928000,
+      "sampled_rss_sample_count": 42,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.1747342190001291
+    },
+    {
+      "trial": 12,
+      "rep": 4,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.11223958499999753,
+      "digest_s": 0.06133346299998266,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000368,
+      "rss_baseline_bytes": 60264448,
+      "rss_end_bytes": 145252352,
+      "rss_end_delta_bytes": 84987904,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 141848,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 145252352,
+      "sampled_peak_rss_bytes": 152682496,
+      "sampled_rss_sample_count": 90,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.27277329999992617
+    },
+    {
+      "trial": 13,
+      "rep": 5,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.05036149000011392,
+      "digest_s": 0.0599533380000139,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 60264448,
+      "rss_end_bytes": 180903936,
+      "rss_end_delta_bytes": 120639488,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 176664,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 180903936,
+      "sampled_peak_rss_bytes": 188231680,
+      "sampled_rss_sample_count": 60,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.21262948800017512
+    },
+    {
+      "trial": 14,
+      "rep": 5,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.11649073000012322,
+      "digest_s": 0.06392811899991102,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000368,
+      "rss_baseline_bytes": 60137472,
+      "rss_end_bytes": 145268736,
+      "rss_end_delta_bytes": 85131264,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 141864,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 145268736,
+      "sampled_peak_rss_bytes": 152489984,
+      "sampled_rss_sample_count": 93,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2794423010000173
+    },
+    {
+      "trial": 15,
+      "rep": 5,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.010807698000007804,
+      "digest_s": 0.06266479299983985,
+      "num_rows": 1000000,
+      "table_nbytes": 52000000,
+      "table_get_total_buffer_size": 52000080,
+      "rss_baseline_bytes": 60264448,
+      "rss_end_bytes": 119803904,
+      "rss_end_delta_bytes": 59539456,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 116996,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 119803904,
+      "sampled_peak_rss_bytes": 125059072,
+      "sampled_rss_sample_count": 42,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.1679120060000514
+    }
+  ],
+  "summary": {
+    "csv": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.1160389199999372,
+        "min": 0.11223958499999753,
+        "max": 0.1234397059999992
+      },
+      "rss_end_delta_bytes": {
+        "median": 85127168,
+        "min": 84987904,
+        "max": 85184512
+      },
+      "rss_end_bytes": {
+        "median": 145268736,
+        "min": 145252352,
+        "max": 145391616
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 152612864,
+        "min": 152489984,
+        "max": 153219072
+      },
+      "ru_maxrss_bytes": {
+        "median": 145268736,
+        "min": 145252352,
+        "max": 145391616
+      },
+      "table_nbytes": {
+        "median": 52000000,
+        "min": 52000000,
+        "max": 52000000
+      },
+      "sampled_rss_sample_count": {
+        "median": 93,
+        "min": 90,
+        "max": 96
+      }
+    },
+    "parquet": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.05409447800002454,
+        "min": 0.047385778000034406,
+        "max": 1.5392510369999854
+      },
+      "rss_end_delta_bytes": {
+        "median": 120692736,
+        "min": 120639488,
+        "max": 120799232
+      },
+      "rss_end_bytes": {
+        "median": 180903936,
+        "min": 180826112,
+        "max": 181047296
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 188297216,
+        "min": 188149760,
+        "max": 188723200
+      },
+      "ru_maxrss_bytes": {
+        "median": 180903936,
+        "min": 180826112,
+        "max": 181047296
+      },
+      "table_nbytes": {
+        "median": 52500000,
+        "min": 52500000,
+        "max": 52500000
+      },
+      "sampled_rss_sample_count": {
+        "median": 63,
+        "min": 57,
+        "max": 767
+      }
+    },
+    "arrow_ipc": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.011382242999843584,
+        "min": 0.010525518000122247,
+        "max": 0.011807592000195655
+      },
+      "rss_end_delta_bytes": {
+        "median": 59662336,
+        "min": 59539456,
+        "max": 59666432
+      },
+      "rss_end_bytes": {
+        "median": 119803904,
+        "min": 119799808,
+        "max": 119939072
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 125059072,
+        "min": 124928000,
+        "max": 126074880
+      },
+      "ru_maxrss_bytes": {
+        "median": 119803904,
+        "min": 119799808,
+        "max": 119939072
+      },
+      "table_nbytes": {
+        "median": 52000000,
+        "min": 52000000,
+        "max": 52000000
+      },
+      "sampled_rss_sample_count": {
+        "median": 42,
+        "min": 42,
+        "max": 43
+      }
+    }
+  },
+  "validation": {
+    "digests_match": true,
+    "digest_groups": 1,
+    "digest": {
+      "num_rows": 1000000,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 500000500000,
+          "min": 1,
+          "max": 1000000
+        },
+        {
+          "name": "user_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50003600546,
+          "min": 1,
+          "max": 100000
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50039843155,
+          "min": 100,
+          "max": 100000
+        },
+        {
+          "name": "city",
+          "type": "string",
+          "null_count": 0,
+          "min": "上海",
+          "max": "深圳",
+          "utf8_length_sum": 2000000
+        },
+        {
+          "name": "event_time",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 1705361586443106,
+          "min": 1704067201,
+          "max": 1706659199
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "null_count": 0,
+          "min": "图书",
+          "max": "食品",
+          "utf8_length_sum": 2000000
+        }
+      ]
+    },
+    "digest_mismatch": null,
+    "strong_equals": {
+      "passed": true,
+      "batch_size": 100000,
+      "batches_compared": 10,
+      "total_rows": 1000000,
+      "pairs": [
+        "csv==arrow_ipc",
+        "parquet==arrow_ipc"
+      ],
+      "note": "在独立进程中按固定行数切批后做 table.equals；先把 CSV / Parquet / IPC 的原始 chunk 切齐，再比较逻辑内容。"
+    }
+  },
+  "metric_notes": {
+    "elapsed_s": "time.perf_counter 仅覆盖读取并物化成 Table；不含 import、父进程预热、摘要和 equals 校验。",
+    "rss_baseline_bytes": "worker 在导入 pyarrow/csv/parquet/ipc/compute/psutil 并设置单线程之后、读取之前的 RSS。",
+    "rss_end_bytes": "读取结束后、仍持有 Table 时的 RSS。",
+    "rss_end_delta_bytes": "rss_end_bytes - rss_baseline_bytes，最直接可解释的驻留增量。",
+    "sampled_peak_rss_bytes": "父进程在发出 GO 前后轮询子进程 RSS 得到的最大值；间隔约 2 ms，可能漏掉短尖峰，样本少时误差更明显。不是硬件级峰值。",
+    "ru_maxrss_bytes": "Linux getrusage(RUSAGE_SELF).ru_maxrss（按 KB×1024 换算）。这是进程生命周期高水位，包含 import 与分配器保留，不是把基线清零之后的读取峰值。",
+    "table_nbytes": "pyarrow.Table.nbytes，是表内 buffer 的逻辑字节，不是整个进程 RSS。",
+    "rss_sampler_cost": "采样由父进程读 /proc，不在 worker 计时路径中加线程。对 worker 墙钟影响很小，但采样本身有父进程轮询开销，也不能保证捕到所有尖峰。"
+  },
+  "output": {
+    "summary_json": "/root/data-formats-lab/results/warm-01/summary.json",
+    "trials_csv": "/root/data-formats-lab/results/warm-01/trials.csv"
+  }
+}
