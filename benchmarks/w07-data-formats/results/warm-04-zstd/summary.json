@@ -1,0 +1,1790 @@
+{
+  "script_version": "compression-v1",
+  "environment": {
+    "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+    "python_executable": "/root/data-formats-lab/.venv/bin/python",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "pyarrow_version": "25.0.1",
+    "psutil_version": "7.2.2",
+    "os_cpu_count": 16,
+    "pandas_installed": false,
+    "zstd": {
+      "available": true,
+      "name": "zstd",
+      "requested_level": 3,
+      "actual_level": 3,
+      "default_level": 1,
+      "minimum_level": -131072,
+      "maximum_level": 22,
+      "pyarrow_version": "25.0.1",
+      "note": "ZSTD level 3 是本轮预定压缩配置的一部分，不是在 codec 之外另加的变量。"
+    }
+  },
+  "limits": {
+    "script_version": "compression-v1",
+    "use_threads": false,
+    "pyarrow_cpu_count": 1,
+    "pyarrow_io_thread_count": 1,
+    "parquet_memory_map": false,
+    "parquet_pre_buffer": false,
+    "sample_interval_ms": 2,
+    "sampling_window": "read_only_before_digest",
+    "sampling_protocol": "READY -> GO -> (timed read) -> READ_DONE -> SAMPLED -> digest -> DONE",
+    "preload_known_lazy_modules": [
+      "pyarrow.dataset",
+      "pyarrow._dataset",
+      "pyarrow._dataset_parquet",
+      "pyarrow._dataset_parquet_encryption",
+      "pyarrow._dataset_orc",
+      "pyarrow.fs"
+    ],
+    "preload_policy": "所有 worker 在 RSS 基线和计时前导入已定位的惰性模块，并触碰对应 FileFormat 对象；不打开数据文件，不预分配 Table。只排除已知模块加载，不声称消除所有首次初始化。",
+    "io_bytes_not_measured": true,
+    "cpu_breakdown_not_measured": true,
+    "note": "读取路径显式 use_threads=False、memory_map=False、pre_buffer=False。热缓存全列读取。"
+  },
+  "cache_definition": "warm：每个 worker 启动前，由父进程将该目标文件按 8MiB 块顺序读到 EOF，依赖操作系统页缓存。预热时不做文件哈希。这不是磁盘冷读。",
+  "hypothesis": "ZSTD 文件通常更小，但热缓存全列读取需要解压，耗时可能更长、持平或更短；RSS 也不一定随文件变小而下降。没有 IO 请求量或 CPU 分解，不能事先承诺快慢，也不能把耗时差异全部归因于少读磁盘。以实测中位数为准，并保留最大值。",
+  "data_dir": "/root/data-formats-lab/data",
+  "source": {
+    "kind": "arrow_ipc",
+    "name": "orders.arrow",
+    "path": "/root/data-formats-lab/data/orders.arrow",
+    "bytes": 52005394,
+    "sha256": "19af17e4d0b5799e5b519cc87cc903e70b2e0aeb618a6d4d25b8358f371e8853",
+    "num_rows": 1000000,
+    "digest": {
+      "num_rows": 1000000,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 500000500000,
+          "min": 1,
+          "max": 1000000
+        },
+        {
+          "name": "user_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50003600546,
+          "min": 1,
+          "max": 100000
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50039843155,
+          "min": 100,
+          "max": 100000
+        },
+        {
+          "name": "city",
+          "type": "string",
+          "null_count": 0,
+          "min": "上海",
+          "max": "深圳",
+          "utf8_length_sum": 2000000
+        },
+        {
+          "name": "event_time",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 1705361586443106,
+          "min": 1704067201,
+          "max": 1706659199
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "null_count": 0,
+          "min": "图书",
+          "max": "食品",
+          "utf8_length_sum": 2000000
+        }
+      ]
+    }
+  },
+  "manifest_path": "/root/data-formats-lab/data/manifest.json",
+  "manifest_rows": 1000000,
+  "manifest_seed": 42,
+  "derived": {
+    "shared_write_kwargs": {
+      "row_group_size": 100000,
+      "use_dictionary": true,
+      "version": "2.6",
+      "write_statistics": true,
+      "use_byte_stream_split": false,
+      "column_encoding": null,
+      "data_page_version": "1.0",
+      "use_compliant_nested_type": true,
+      "store_schema": true,
+      "write_page_index": false,
+      "write_page_checksum": false,
+      "data_page_size": null,
+      "write_batch_size": null,
+      "dictionary_pagesize_limit": null,
+      "flavor": null,
+      "use_deprecated_int96_timestamps": null,
+      "coerce_timestamps": null,
+      "allow_truncated_timestamps": false,
+      "store_decimal_as_integer": false
+    },
+    "metadata_comparison": {
+      "layout_equal": true,
+      "codec_as_expected": true,
+      "none_compressions": [
+        "UNCOMPRESSED"
+      ],
+      "zstd_compressions": [
+        "ZSTD"
+      ],
+      "uncompressed_size_mismatches": [
+        {
+          "row_group": 0,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 1,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 2,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 3,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 4,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 5,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 7,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        },
+        {
+          "row_group": 9,
+          "name": "category",
+          "none": 38034,
+          "zstd": 38035
+        }
+      ],
+      "unique_variable_ok": true,
+      "note": "unique_variable_ok 表示两份新文件的行组划分、schema 列序和各列 encodings 相同，且 codec 分别为 UNCOMPRESSED 与 ZSTD。压缩后大小必然不同；未压缩大小若略有差别会记录，但不单独作为失败条件。"
+    },
+    "original_data_parquet_reference": {
+      "path": "/root/data-formats-lab/data/orders.parquet",
+      "bytes": 34749755,
+      "used_as_timing_baseline": false,
+      "layout_matches_new_none": true,
+      "note": "仅作编码/行组参考，不是本轮计时对照。即使布局恰好与新 NONE 相同，本轮唯一变量仍只在两份新文件之间成立，因为原始文件并未由本脚本用同一组显式参数当场核验后写出。"
+    },
+    "unique_variable_claim": "本轮计时对照的两份文件由同一 pa.Table、同一路径函数、同一组 SHARED_WRITE_KWARGS 写出，差别仅是预定压缩配置：NONE（compression_level=None）与 ZSTD（compression_level=3）。原始 data/orders.parquet 不作计时基线。"
+  },
+  "files": {
+    "parquet_none": {
+      "name": "orders_none.parquet",
+      "path": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "bytes": 34749755,
+      "mib": 33.13994884490967,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "sha256": "fb07cf888192074efdc76cf8e820dc47db1dec0b883262c010dedb3754c71985",
+      "compression": "NONE",
+      "compression_level": null,
+      "expected_metadata_codec": "UNCOMPRESSED",
+      "write_kwargs": {
+        "row_group_size": 100000,
+        "use_dictionary": true,
+        "version": "2.6",
+        "write_statistics": true,
+        "use_byte_stream_split": false,
+        "column_encoding": null,
+        "data_page_version": "1.0",
+        "use_compliant_nested_type": true,
+        "store_schema": true,
+        "write_page_index": false,
+        "write_page_checksum": false,
+        "data_page_size": null,
+        "write_batch_size": null,
+        "dictionary_pagesize_limit": null,
+        "flavor": null,
+        "use_deprecated_int96_timestamps": null,
+        "coerce_timestamps": null,
+        "allow_truncated_timestamps": false,
+        "store_decimal_as_integer": false,
+        "compression": "NONE",
+        "compression_level": null
+      },
+      "num_row_groups": 10,
+      "row_group_num_rows": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "unique_compressions": [
+        "UNCOMPRESSED"
+      ]
+    },
+    "parquet_zstd": {
+      "name": "orders_zstd_level3.parquet",
+      "path": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "bytes": 16511945,
+      "mib": 15.747017860412598,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "sha256": "a8457eb93943fd27e978efaf9879ef0f355583c25d3a88ea6ebc3e97001ffa58",
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "expected_metadata_codec": "ZSTD",
+      "write_kwargs": {
+        "row_group_size": 100000,
+        "use_dictionary": true,
+        "version": "2.6",
+        "write_statistics": true,
+        "use_byte_stream_split": false,
+        "column_encoding": null,
+        "data_page_version": "1.0",
+        "use_compliant_nested_type": true,
+        "store_schema": true,
+        "write_page_index": false,
+        "write_page_checksum": false,
+        "data_page_size": null,
+        "write_batch_size": null,
+        "dictionary_pagesize_limit": null,
+        "flavor": null,
+        "use_deprecated_int96_timestamps": null,
+        "coerce_timestamps": null,
+        "allow_truncated_timestamps": false,
+        "store_decimal_as_integer": false,
+        "compression": "ZSTD",
+        "compression_level": 3
+      },
+      "num_row_groups": 10,
+      "row_group_num_rows": [
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000,
+        100000
+      ],
+      "unique_compressions": [
+        "ZSTD"
+      ]
+    }
+  },
+  "seed": 42,
+  "runs_per_variant": 5,
+  "schedule": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "variant": "parquet_zstd"
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "variant": "parquet_none"
+    },
+    {
+      "trial": 3,
+      "rep": 2,
+      "variant": "parquet_zstd"
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "variant": "parquet_none"
+    },
+    {
+      "trial": 5,
+      "rep": 3,
+      "variant": "parquet_none"
+    },
+    {
+      "trial": 6,
+      "rep": 3,
+      "variant": "parquet_zstd"
+    },
+    {
+      "trial": 7,
+      "rep": 4,
+      "variant": "parquet_zstd"
+    },
+    {
+      "trial": 8,
+      "rep": 4,
+      "variant": "parquet_none"
+    },
+    {
+      "trial": 9,
+      "rep": 5,
+      "variant": "parquet_zstd"
+    },
+    {
+      "trial": 10,
+      "rep": 5,
+      "variant": "parquet_none"
+    }
+  ],
+  "trials": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "variant": "parquet_zstd",
+      "format": "parquet",
+      "file_name": "orders_zstd_level3.parquet",
+      "file_bytes": 16511945,
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "warmed_bytes": 16511945,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "elapsed_s": 0.14371081900026184,
+      "digest_s": 0.058333173001301475,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68739072,
+      "rss_end_bytes": 185339904,
+      "rss_end_delta_bytes": 116600832,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 180996,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 185339904,
+      "ru_maxrss_after_digest_bytes": 192536576,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 185339904,
+      "sampled_rss_sample_count": 70,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.723852679002448
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "variant": "parquet_none",
+      "format": "parquet",
+      "file_name": "orders_none.parquet",
+      "file_bytes": 34749755,
+      "compression": "NONE",
+      "compression_level": null,
+      "warmed_bytes": 34749755,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "elapsed_s": 0.04587048999383114,
+      "digest_s": 0.05578658700687811,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68878336,
+      "rss_end_bytes": 182882304,
+      "rss_end_delta_bytes": 114003968,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 178596,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 182882304,
+      "ru_maxrss_after_digest_bytes": 190074880,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 182882304,
+      "sampled_rss_sample_count": 23,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.20806496299337596
+    },
+    {
+      "trial": 3,
+      "rep": 2,
+      "variant": "parquet_zstd",
+      "format": "parquet",
+      "file_name": "orders_zstd_level3.parquet",
+      "file_bytes": 16511945,
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "warmed_bytes": 16511945,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "elapsed_s": 0.09969332099717576,
+      "digest_s": 0.05764027900295332,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68878336,
+      "rss_end_bytes": 185204736,
+      "rss_end_delta_bytes": 116326400,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 180864,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 185204736,
+      "ru_maxrss_after_digest_bytes": 192532480,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 185204736,
+      "sampled_rss_sample_count": 49,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.27941070598899387
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "variant": "parquet_none",
+      "format": "parquet",
+      "file_name": "orders_none.parquet",
+      "file_bytes": 34749755,
+      "compression": "NONE",
+      "compression_level": null,
+      "warmed_bytes": 34749755,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "elapsed_s": 0.04424796099192463,
+      "digest_s": 0.05467140499968082,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68751360,
+      "rss_end_bytes": 182755328,
+      "rss_end_delta_bytes": 114003968,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 178472,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 182755328,
+      "ru_maxrss_after_digest_bytes": 189947904,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 182755328,
+      "sampled_rss_sample_count": 23,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.20401989298989065
+    },
+    {
+      "trial": 5,
+      "rep": 3,
+      "variant": "parquet_none",
+      "format": "parquet",
+      "file_name": "orders_none.parquet",
+      "file_bytes": 34749755,
+      "compression": "NONE",
+      "compression_level": null,
+      "warmed_bytes": 34749755,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "elapsed_s": 0.046060826993198134,
+      "digest_s": 0.05588517599971965,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68882432,
+      "rss_end_bytes": 182755328,
+      "rss_end_delta_bytes": 113872896,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 178472,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 182755328,
+      "ru_maxrss_after_digest_bytes": 190083072,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 182755328,
+      "sampled_rss_sample_count": 23,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2054123419948155
+    },
+    {
+      "trial": 6,
+      "rep": 3,
+      "variant": "parquet_zstd",
+      "format": "parquet",
+      "file_name": "orders_zstd_level3.parquet",
+      "file_bytes": 16511945,
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "warmed_bytes": 16511945,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "elapsed_s": 0.07451004200265743,
+      "digest_s": 0.05662002999451943,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68739072,
+      "rss_end_bytes": 185204736,
+      "rss_end_delta_bytes": 116465664,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 180864,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 185204736,
+      "ru_maxrss_after_digest_bytes": 192532480,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 185204736,
+      "sampled_rss_sample_count": 37,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.24180099899240304
+    },
+    {
+      "trial": 7,
+      "rep": 4,
+      "variant": "parquet_zstd",
+      "format": "parquet",
+      "file_name": "orders_zstd_level3.parquet",
+      "file_bytes": 16511945,
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "warmed_bytes": 16511945,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "elapsed_s": 0.07302363700000569,
+      "digest_s": 0.05814051500055939,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68874240,
+      "rss_end_bytes": 185335808,
+      "rss_end_delta_bytes": 116461568,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 180992,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 185335808,
+      "ru_maxrss_after_digest_bytes": 192528384,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 185335808,
+      "sampled_rss_sample_count": 36,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.24786923300416674
+    },
+    {
+      "trial": 8,
+      "rep": 4,
+      "variant": "parquet_none",
+      "format": "parquet",
+      "file_name": "orders_none.parquet",
+      "file_bytes": 34749755,
+      "compression": "NONE",
+      "compression_level": null,
+      "warmed_bytes": 34749755,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "elapsed_s": 0.04479628101398703,
+      "digest_s": 0.056625918005011044,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 69005312,
+      "rss_end_bytes": 182882304,
+      "rss_end_delta_bytes": 113876992,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 178596,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 182882304,
+      "ru_maxrss_after_digest_bytes": 190210048,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 182882304,
+      "sampled_rss_sample_count": 23,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.2056756329984637
+    },
+    {
+      "trial": 9,
+      "rep": 5,
+      "variant": "parquet_zstd",
+      "format": "parquet",
+      "file_name": "orders_zstd_level3.parquet",
+      "file_bytes": 16511945,
+      "compression": "ZSTD",
+      "compression_level": 3,
+      "warmed_bytes": 16511945,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_zstd_level3.parquet",
+      "elapsed_s": 0.07238306500948966,
+      "digest_s": 0.05609708600968588,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68874240,
+      "rss_end_bytes": 185208832,
+      "rss_end_delta_bytes": 116334592,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 180868,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 185208832,
+      "ru_maxrss_after_digest_bytes": 192532480,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 185208832,
+      "sampled_rss_sample_count": 36,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.23535498999990523
+    },
+    {
+      "trial": 10,
+      "rep": 5,
+      "variant": "parquet_none",
+      "format": "parquet",
+      "file_name": "orders_none.parquet",
+      "file_bytes": 34749755,
+      "compression": "NONE",
+      "compression_level": null,
+      "warmed_bytes": 34749755,
+      "script_version": "compression-v1",
+      "input": "/root/data-formats-lab/results/warm-04-zstd/orders_none.parquet",
+      "elapsed_s": 0.04356732699670829,
+      "digest_s": 0.058503741005552,
+      "num_rows": 1000000,
+      "table_nbytes": 52500000,
+      "table_get_total_buffer_size": 52500080,
+      "rss_baseline_bytes": 68886528,
+      "rss_end_bytes": 182759424,
+      "rss_end_delta_bytes": 113872896,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "order_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 500000500000,
+            "min": 1,
+            "max": 1000000
+          },
+          {
+            "name": "user_id",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50003600546,
+            "min": 1,
+            "max": 100000
+          },
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "null_count": 0,
+            "min": "上海",
+            "max": "深圳",
+            "utf8_length_sum": 2000000
+          },
+          {
+            "name": "event_time",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 1705361586443106,
+            "min": 1704067201,
+            "max": 1706659199
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "null_count": 0,
+            "min": "图书",
+            "max": "食品",
+            "utf8_length_sum": 2000000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 178476,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 182759424,
+      "ru_maxrss_after_digest_bytes": 190083072,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 182759424,
+      "sampled_rss_sample_count": 22,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.20642118999967352
+    }
+  ],
+  "summary": {
+    "parquet_none": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.04479628101398703,
+        "min": 0.04356732699670829,
+        "max": 0.046060826993198134
+      },
+      "rss_end_delta_bytes": {
+        "median": 113876992,
+        "min": 113872896,
+        "max": 114003968
+      },
+      "rss_end_bytes": {
+        "median": 182759424,
+        "min": 182755328,
+        "max": 182882304
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 182759424,
+        "min": 182755328,
+        "max": 182882304
+      },
+      "ru_maxrss_bytes": {
+        "median": 182759424,
+        "min": 182755328,
+        "max": 182882304
+      },
+      "table_nbytes": {
+        "median": 52500000,
+        "min": 52500000,
+        "max": 52500000
+      },
+      "sampled_rss_sample_count": {
+        "median": 23,
+        "min": 22,
+        "max": 23
+      }
+    },
+    "parquet_zstd": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.07451004200265743,
+        "min": 0.07238306500948966,
+        "max": 0.14371081900026184
+      },
+      "rss_end_delta_bytes": {
+        "median": 116461568,
+        "min": 116326400,
+        "max": 116600832
+      },
+      "rss_end_bytes": {
+        "median": 185208832,
+        "min": 185204736,
+        "max": 185339904
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 185208832,
+        "min": 185204736,
+        "max": 185339904
+      },
+      "ru_maxrss_bytes": {
+        "median": 185208832,
+        "min": 185204736,
+        "max": 185339904
+      },
+      "table_nbytes": {
+        "median": 52500000,
+        "min": 52500000,
+        "max": 52500000
+      },
+      "sampled_rss_sample_count": {
+        "median": 37,
+        "min": 36,
+        "max": 70
+      }
+    }
+  },
+  "validation": {
+    "digests_match_source": true,
+    "digest_groups": 1,
+    "source_digest": {
+      "num_rows": 1000000,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 500000500000,
+          "min": 1,
+          "max": 1000000
+        },
+        {
+          "name": "user_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50003600546,
+          "min": 1,
+          "max": 100000
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50039843155,
+          "min": 100,
+          "max": 100000
+        },
+        {
+          "name": "city",
+          "type": "string",
+          "null_count": 0,
+          "min": "上海",
+          "max": "深圳",
+          "utf8_length_sum": 2000000
+        },
+        {
+          "name": "event_time",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 1705361586443106,
+          "min": 1704067201,
+          "max": 1706659199
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "null_count": 0,
+          "min": "图书",
+          "max": "食品",
+          "utf8_length_sum": 2000000
+        }
+      ]
+    },
+    "digest": {
+      "num_rows": 1000000,
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 500000500000,
+          "min": 1,
+          "max": 1000000
+        },
+        {
+          "name": "user_id",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50003600546,
+          "min": 1,
+          "max": 100000
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50039843155,
+          "min": 100,
+          "max": 100000
+        },
+        {
+          "name": "city",
+          "type": "string",
+          "null_count": 0,
+          "min": "上海",
+          "max": "深圳",
+          "utf8_length_sum": 2000000
+        },
+        {
+          "name": "event_time",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 1705361586443106,
+          "min": 1704067201,
+          "max": 1706659199
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "null_count": 0,
+          "min": "图书",
+          "max": "食品",
+          "utf8_length_sum": 2000000
+        }
+      ]
+    },
+    "digest_mismatch": null,
+    "strong_equals": {
+      "passed": true,
+      "batch_size": 100000,
+      "batches_compared": 10,
+      "total_rows": 1000000,
+      "pairs": [
+        "parquet_none==source",
+        "parquet_zstd==source"
+      ],
+      "note": "在独立进程中按固定行数切批后做 table.equals；对照对象是本轮加载的源表（orders.arrow），不是原始 data/orders.parquet。读路径与测量相同口径（IPC 用 OSFile，Parquet 非 mmap、use_threads=False）。"
+    }
+  },
+  "metric_notes": {
+    "elapsed_s": "time.perf_counter 仅覆盖读取并物化成全列 Table；不含源表加载、Parquet 写入、import、已知惰性模块预加载、父进程预热、摘要和 equals 校验。",
+    "rss_baseline_bytes": "worker 在导入 pyarrow/parquet 等、设置单线程，并显式导入 pyarrow.dataset 等已定位惰性模块之后、正式读取之前的 RSS。",
+    "rss_end_bytes": "读取结束后、仍持有 Table、开始摘要之前的 RSS。",
+    "rss_end_delta_bytes": "rss_end_bytes - rss_baseline_bytes，最直接可解释的驻留增量。",
+    "sampled_peak_rss_bytes": "父进程仅在读窗口（发出 GO 之后到收到 READ_DONE，此时 Table 仍被持有、摘要未开始）轮询子进程 RSS 得到的最大值；间隔约 2 ms，可能漏掉短尖峰。不是硬件级峰值，也不包含摘要或校验。",
+    "ru_maxrss_bytes": "Linux getrusage(RUSAGE_SELF).ru_maxrss（按 KB×1024 换算），在读取结束、摘要开始之前记录。这是截至该时刻的进程生命周期高水位，包含 import 与分配器保留，不是把基线清零之后的读取峰值，也不等于 sampled_peak。",
+    "ru_maxrss_after_digest_bytes": "摘要完成后再读一次 ru_maxrss，同样是生命周期高水位，可能高于读后值。",
+    "table_nbytes": "pyarrow.Table.nbytes，是表内 buffer 的逻辑字节，不是整个进程 RSS。",
+    "io_and_cpu": "未测量磁盘或操作系统读取字节，也未分解解压 CPU。热缓存下不要把进程 read_bytes 直接当成 IO 请求量，也不能把耗时差异全部归因于少读磁盘。"
+  },
+  "output": {
+    "summary_json": "/root/data-formats-lab/results/warm-04-zstd/summary.json",
+    "trials_csv": "/root/data-formats-lab/results/warm-04-zstd/trials.csv",
+    "derived_manifest": "/root/data-formats-lab/results/warm-04-zstd/derived_manifest.json"
+  }
+}

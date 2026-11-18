@@ -1,0 +1,1718 @@
+{
+  "script_version": "projection-v1",
+  "environment": {
+    "python": "3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]",
+    "python_executable": "/root/data-formats-lab/.venv/bin/python",
+    "platform": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "pyarrow_version": "25.0.1",
+    "psutil_version": "7.2.2",
+    "os_cpu_count": 16,
+    "pandas_installed": false
+  },
+  "selected_columns": [
+    "amount_cents"
+  ],
+  "read_api_strategy": {
+    "selected_columns": [
+      "amount_cents"
+    ],
+    "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+    "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+    "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+    "io_bytes_not_measured": true,
+    "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+  },
+  "limits": {
+    "script_version": "projection-v1",
+    "selected_columns": [
+      "amount_cents"
+    ],
+    "use_threads": false,
+    "pyarrow_cpu_count": 1,
+    "pyarrow_io_thread_count": 1,
+    "parquet_memory_map": false,
+    "parquet_pre_buffer": false,
+    "arrow_ipc_source": "pa.OSFile (not mmap) + IpcReadOptions(included_fields=..., use_threads=False) passed to open_file, then read_all(); not Table.select after a full read",
+    "csv_explicit_schema": true,
+    "csv_include_columns": [
+      "amount_cents"
+    ],
+    "parquet_columns": [
+      "amount_cents"
+    ],
+    "sample_interval_ms": 2,
+    "sampling_window": "read_only_before_digest",
+    "sampling_protocol": "READY -> GO -> (timed read) -> READ_DONE -> SAMPLED -> digest -> DONE",
+    "preload_known_lazy_modules": [
+      "pyarrow.dataset",
+      "pyarrow._dataset",
+      "pyarrow._dataset_parquet",
+      "pyarrow._dataset_parquet_encryption",
+      "pyarrow._dataset_orc",
+      "pyarrow.fs"
+    ],
+    "preload_policy": "所有 worker 在 RSS 基线和计时前导入已定位的惰性模块，并触碰对应 FileFormat 对象；不打开数据文件，不预分配 Table。只排除已知模块加载，不声称消除所有首次初始化。",
+    "note": "各读取路径均显式 use_threads=False，避免默认线程数不同造成混淆。"
+  },
+  "cache_definition": "warm：每个 worker 启动前，由父进程将该目标文件按 8MiB 块顺序读到 EOF，依赖操作系统页缓存。不做文件哈希。这不是磁盘冷读；若刚运行过 generate_data.py，文件本来就很可能已经在页缓存中。",
+  "data_dir": "/root/data-formats-lab/data",
+  "manifest_path": "/root/data-formats-lab/data/manifest.json",
+  "manifest_rows": 1000000,
+  "manifest_seed": 42,
+  "writer_config": {
+    "csv": {
+      "filename": "orders.csv",
+      "compression": null,
+      "include_header": true
+    },
+    "parquet": {
+      "filename": "orders.parquet",
+      "compression": "NONE",
+      "row_group_size": 100000,
+      "use_dictionary": true,
+      "note": "已关闭压缩，但 PyArrow 默认仍可能对列使用字典/RLE 等编码；因此本轮比较的是三套格式及其默认编码，不是纯行式/列式布局对照。"
+    },
+    "arrow_ipc": {
+      "filename": "orders.arrow",
+      "format": "Arrow IPC file (random access)",
+      "compression": null
+    }
+  },
+  "files": {
+    "csv": {
+      "name": "orders.csv",
+      "bytes": 47669461,
+      "mib": 45.461140632629395,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 47669461
+    },
+    "parquet": {
+      "name": "orders.parquet",
+      "bytes": 34749755,
+      "mib": 33.13994884490967,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 34749755
+    },
+    "arrow_ipc": {
+      "name": "orders.arrow",
+      "bytes": 52005394,
+      "mib": 49.596208572387695,
+      "mib_definition": "1 MiB = 1024*1024 bytes",
+      "manifest_bytes": 52005394
+    }
+  },
+  "seed": 42,
+  "runs_per_format": 5,
+  "schedule": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "format": "parquet"
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "format": "csv"
+    },
+    {
+      "trial": 3,
+      "rep": 1,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 5,
+      "rep": 2,
+      "format": "parquet"
+    },
+    {
+      "trial": 6,
+      "rep": 2,
+      "format": "csv"
+    },
+    {
+      "trial": 7,
+      "rep": 3,
+      "format": "parquet"
+    },
+    {
+      "trial": 8,
+      "rep": 3,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 9,
+      "rep": 3,
+      "format": "csv"
+    },
+    {
+      "trial": 10,
+      "rep": 4,
+      "format": "parquet"
+    },
+    {
+      "trial": 11,
+      "rep": 4,
+      "format": "arrow_ipc"
+    },
+    {
+      "trial": 12,
+      "rep": 4,
+      "format": "csv"
+    },
+    {
+      "trial": 13,
+      "rep": 5,
+      "format": "parquet"
+    },
+    {
+      "trial": 14,
+      "rep": 5,
+      "format": "csv"
+    },
+    {
+      "trial": 15,
+      "rep": 5,
+      "format": "arrow_ipc"
+    }
+  ],
+  "trials": [
+    {
+      "trial": 1,
+      "rep": 1,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.11378391500329599,
+      "digest_s": 0.035614851003629155,
+      "num_rows": 1000000,
+      "table_nbytes": 8125000,
+      "table_get_total_buffer_size": 8125000,
+      "rss_baseline_bytes": 67502080,
+      "rss_end_bytes": 91197440,
+      "rss_end_delta_bytes": 23695360,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 89060,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 91197440,
+      "ru_maxrss_after_digest_bytes": 91852800,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 91197440,
+      "sampled_rss_sample_count": 55,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.9737784349999856
+    },
+    {
+      "trial": 2,
+      "rep": 1,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.09721295000053942,
+      "digest_s": 0.002042966996668838,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67510272,
+      "rss_end_bytes": 97058816,
+      "rss_end_delta_bytes": 29548544,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 94784,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 97058816,
+      "ru_maxrss_after_digest_bytes": 97583104,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 97058816,
+      "sampled_rss_sample_count": 48,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.21652099199127406
+    },
+    {
+      "trial": 3,
+      "rep": 1,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.023337186998105608,
+      "digest_s": 0.0016200039972318336,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67678208,
+      "rss_end_bytes": 115949568,
+      "rss_end_delta_bytes": 48271360,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 113232,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 115949568,
+      "ru_maxrss_after_digest_bytes": 116473856,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 115949568,
+      "sampled_rss_sample_count": 13,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.13497527300205547
+    },
+    {
+      "trial": 4,
+      "rep": 2,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.006798021000577137,
+      "digest_s": 0.0015430279891006649,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67809280,
+      "rss_end_bytes": 116084736,
+      "rss_end_delta_bytes": 48275456,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 113364,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 116084736,
+      "ru_maxrss_after_digest_bytes": 116609024,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 116084736,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11610092100454494
+    },
+    {
+      "trial": 5,
+      "rep": 2,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.006619301988394,
+      "digest_s": 0.001340477989288047,
+      "num_rows": 1000000,
+      "table_nbytes": 8125000,
+      "table_get_total_buffer_size": 8125000,
+      "rss_baseline_bytes": 67813376,
+      "rss_end_bytes": 91320320,
+      "rss_end_delta_bytes": 23506944,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 89180,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 91320320,
+      "ru_maxrss_after_digest_bytes": 91975680,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 91320320,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11612397199496627
+    },
+    {
+      "trial": 6,
+      "rep": 2,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.06794768199324608,
+      "digest_s": 0.0015093480033101514,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67817472,
+      "rss_end_bytes": 95133696,
+      "rss_end_delta_bytes": 27316224,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 92904,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 95133696,
+      "ru_maxrss_after_digest_bytes": 95789056,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 95133696,
+      "sampled_rss_sample_count": 34,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.17604451200168114
+    },
+    {
+      "trial": 7,
+      "rep": 3,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.006581919005839154,
+      "digest_s": 0.0014210280060069636,
+      "num_rows": 1000000,
+      "table_nbytes": 8125000,
+      "table_get_total_buffer_size": 8125000,
+      "rss_baseline_bytes": 67940352,
+      "rss_end_bytes": 91586560,
+      "rss_end_delta_bytes": 23646208,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 89440,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 91586560,
+      "ru_maxrss_after_digest_bytes": 92241920,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 91586560,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11615336401155218
+    },
+    {
+      "trial": 8,
+      "rep": 3,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.006588962991372682,
+      "digest_s": 0.0015703160024713725,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67809280,
+      "rss_end_bytes": 116080640,
+      "rss_end_delta_bytes": 48271360,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 113360,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 116080640,
+      "ru_maxrss_after_digest_bytes": 116604928,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 116080640,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11403105000499636
+    },
+    {
+      "trial": 9,
+      "rep": 3,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.0688375099998666,
+      "digest_s": 0.0016145080007845536,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67547136,
+      "rss_end_bytes": 94994432,
+      "rss_end_delta_bytes": 27447296,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 92768,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 94994432,
+      "ru_maxrss_after_digest_bytes": 95518720,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 94994432,
+      "sampled_rss_sample_count": 34,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.17702293999900576
+    },
+    {
+      "trial": 10,
+      "rep": 4,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.005707817996153608,
+      "digest_s": 0.0015046259941300377,
+      "num_rows": 1000000,
+      "table_nbytes": 8125000,
+      "table_get_total_buffer_size": 8125000,
+      "rss_baseline_bytes": 67809280,
+      "rss_end_bytes": 91320320,
+      "rss_end_delta_bytes": 23511040,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 89180,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 91320320,
+      "ru_maxrss_after_digest_bytes": 91975680,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 91320320,
+      "sampled_rss_sample_count": 4,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11429121399123687
+    },
+    {
+      "trial": 11,
+      "rep": 4,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.006123248997027986,
+      "digest_s": 0.0016048950055846944,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67809280,
+      "rss_end_bytes": 116080640,
+      "rss_end_delta_bytes": 48271360,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 113360,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 116080640,
+      "ru_maxrss_after_digest_bytes": 116604928,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 116080640,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11367031499685254
+    },
+    {
+      "trial": 12,
+      "rep": 4,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.06984423600079026,
+      "digest_s": 0.001600859992322512,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67682304,
+      "rss_end_bytes": 95129600,
+      "rss_end_delta_bytes": 27447296,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 92900,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 95129600,
+      "ru_maxrss_after_digest_bytes": 95653888,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 95129600,
+      "sampled_rss_sample_count": 35,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.17658840399235487
+    },
+    {
+      "trial": 13,
+      "rep": 5,
+      "format": "parquet",
+      "file_name": "orders.parquet",
+      "file_bytes": 34749755,
+      "warmed_bytes": 34749755,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.parquet",
+      "elapsed_s": 0.00580360199091956,
+      "digest_s": 0.0014332069986267015,
+      "num_rows": 1000000,
+      "table_nbytes": 8125000,
+      "table_get_total_buffer_size": 8125000,
+      "rss_baseline_bytes": 67813376,
+      "rss_end_bytes": 91324416,
+      "rss_end_delta_bytes": 23511040,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 89184,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 91324416,
+      "ru_maxrss_after_digest_bytes": 91979776,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 91324416,
+      "sampled_rss_sample_count": 4,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11545642399869394
+    },
+    {
+      "trial": 14,
+      "rep": 5,
+      "format": "csv",
+      "file_name": "orders.csv",
+      "file_bytes": 47669461,
+      "warmed_bytes": 47669461,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.csv",
+      "elapsed_s": 0.06755803199484944,
+      "digest_s": 0.0019293910008855164,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67813376,
+      "rss_end_bytes": 95264768,
+      "rss_end_delta_bytes": 27451392,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 93032,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 95264768,
+      "ru_maxrss_after_digest_bytes": 95920128,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 95264768,
+      "sampled_rss_sample_count": 33,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.17728049399738666
+    },
+    {
+      "trial": 15,
+      "rep": 5,
+      "format": "arrow_ipc",
+      "file_name": "orders.arrow",
+      "file_bytes": 52005394,
+      "warmed_bytes": 52005394,
+      "script_version": "projection-v1",
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "read_api_strategy": {
+        "selected_columns": [
+          "amount_cents"
+        ],
+        "csv": "ConvertOptions(include_columns=['amount_cents'], column_types=full-file explicit schema). CSV 仍会扫描整份文本，只能少做未选列的转换，不是 IO 级列裁剪。",
+        "parquet": "pq.read_table(..., columns=['amount_cents'])，在读 API 中做列裁剪。",
+        "arrow_ipc": "IpcReadOptions(included_fields=[2] 即 full_schema.get_field_index(['amount_cents']), use_threads=False) 在 open_file(pa.OSFile) 时传入，然后 read_all()。不是先 read_all 全表再 Table.select()。本实验不测量、也不声称实际磁盘或 OS 读取字节因此减少。",
+        "io_bytes_not_measured": true,
+        "note": "热缓存下不能把进程 read_bytes 直接当成读取请求量。本结果只比较读 API 选择列之后的物化耗时和内存，不证明物理 IO 更少。"
+      },
+      "input": "/root/data-formats-lab/data/orders.arrow",
+      "elapsed_s": 0.006653504999121651,
+      "digest_s": 0.0017653420072747394,
+      "num_rows": 1000000,
+      "table_nbytes": 8000000,
+      "table_get_total_buffer_size": 8000000,
+      "rss_baseline_bytes": 67801088,
+      "rss_end_bytes": 116068352,
+      "rss_end_delta_bytes": 48267264,
+      "thread_info": {
+        "pyarrow_cpu_count": 1,
+        "pyarrow_io_thread_count": 1,
+        "use_threads": false
+      },
+      "preload": {
+        "known_lazy_modules": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "imported": [
+          "pyarrow.dataset",
+          "pyarrow._dataset",
+          "pyarrow._dataset_parquet",
+          "pyarrow._dataset_parquet_encryption",
+          "pyarrow._dataset_orc",
+          "pyarrow.fs"
+        ],
+        "missing": [],
+        "touched_format_objects": [
+          "pyarrow.dataset.ParquetFileFormat()",
+          "pyarrow.dataset.IpcFileFormat()",
+          "pyarrow.dataset.CsvFileFormat()"
+        ],
+        "pandas_installed": false,
+        "pandas_in_sys_modules": false,
+        "note": "只把已定位的惰性模块加载移到基线和计时之前；不预读数据，也不声称消除所有首次初始化。"
+      },
+      "sampling_window": "read_only_before_digest",
+      "pandas_installed": false,
+      "pandas_in_sys_modules": false,
+      "digest": {
+        "num_rows": 1000000,
+        "columns": [
+          {
+            "name": "amount_cents",
+            "type": "int64",
+            "null_count": 0,
+            "sum": 50039843155,
+            "min": 100,
+            "max": 100000
+          }
+        ]
+      },
+      "pyarrow_version": "25.0.1",
+      "psutil_version": "7.2.2",
+      "ru_maxrss_raw": 113348,
+      "ru_maxrss_unit": "kilobytes_on_linux",
+      "ru_maxrss_bytes": 116068352,
+      "ru_maxrss_after_digest_bytes": 116723712,
+      "ru_maxrss_meaning": "process_lifetime_high_water_mark_not_reset_at_baseline",
+      "sampled_peak_rss_bytes": 116068352,
+      "sampled_rss_sample_count": 5,
+      "sample_interval_s": 0.002,
+      "sample_error": null,
+      "parent_wall_s": 0.11922182199486997
+    }
+  ],
+  "summary": {
+    "csv": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.0688375099998666,
+        "min": 0.06755803199484944,
+        "max": 0.09721295000053942
+      },
+      "rss_end_delta_bytes": {
+        "median": 27447296,
+        "min": 27316224,
+        "max": 29548544
+      },
+      "rss_end_bytes": {
+        "median": 95133696,
+        "min": 94994432,
+        "max": 97058816
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 95133696,
+        "min": 94994432,
+        "max": 97058816
+      },
+      "ru_maxrss_bytes": {
+        "median": 95133696,
+        "min": 94994432,
+        "max": 97058816
+      },
+      "table_nbytes": {
+        "median": 8000000,
+        "min": 8000000,
+        "max": 8000000
+      },
+      "sampled_rss_sample_count": {
+        "median": 34,
+        "min": 33,
+        "max": 48
+      }
+    },
+    "parquet": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.006581919005839154,
+        "min": 0.005707817996153608,
+        "max": 0.11378391500329599
+      },
+      "rss_end_delta_bytes": {
+        "median": 23511040,
+        "min": 23506944,
+        "max": 23695360
+      },
+      "rss_end_bytes": {
+        "median": 91320320,
+        "min": 91197440,
+        "max": 91586560
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 91320320,
+        "min": 91197440,
+        "max": 91586560
+      },
+      "ru_maxrss_bytes": {
+        "median": 91320320,
+        "min": 91197440,
+        "max": 91586560
+      },
+      "table_nbytes": {
+        "median": 8125000,
+        "min": 8125000,
+        "max": 8125000
+      },
+      "sampled_rss_sample_count": {
+        "median": 5,
+        "min": 4,
+        "max": 55
+      }
+    },
+    "arrow_ipc": {
+      "n": 5,
+      "elapsed_s": {
+        "median": 0.006653504999121651,
+        "min": 0.006123248997027986,
+        "max": 0.023337186998105608
+      },
+      "rss_end_delta_bytes": {
+        "median": 48271360,
+        "min": 48267264,
+        "max": 48275456
+      },
+      "rss_end_bytes": {
+        "median": 116080640,
+        "min": 115949568,
+        "max": 116084736
+      },
+      "sampled_peak_rss_bytes": {
+        "median": 116080640,
+        "min": 115949568,
+        "max": 116084736
+      },
+      "ru_maxrss_bytes": {
+        "median": 116080640,
+        "min": 115949568,
+        "max": 116084736
+      },
+      "table_nbytes": {
+        "median": 8000000,
+        "min": 8000000,
+        "max": 8000000
+      },
+      "sampled_rss_sample_count": {
+        "median": 5,
+        "min": 5,
+        "max": 13
+      }
+    }
+  },
+  "validation": {
+    "digests_match": true,
+    "digest_groups": 1,
+    "digest": {
+      "num_rows": 1000000,
+      "columns": [
+        {
+          "name": "amount_cents",
+          "type": "int64",
+          "null_count": 0,
+          "sum": 50039843155,
+          "min": 100,
+          "max": 100000
+        }
+      ]
+    },
+    "digest_mismatch": null,
+    "strong_equals": {
+      "passed": true,
+      "selected_columns": [
+        "amount_cents"
+      ],
+      "expected_schema": [
+        "amount_cents: int64"
+      ],
+      "batch_size": 100000,
+      "batches_compared": 10,
+      "total_rows": 1000000,
+      "pairs": [
+        "csv==arrow_ipc",
+        "parquet==arrow_ipc"
+      ],
+      "note": "在独立进程中按投影后的显式单列（或所选列）schema 切齐批次，再做 table.equals；读路径与测量相同，不先读全表再 select。"
+    }
+  },
+  "metric_notes": {
+    "elapsed_s": "time.perf_counter 仅覆盖读取并物化成 Table；不含 import、已知惰性模块预加载、父进程预热、摘要和 equals 校验。",
+    "rss_baseline_bytes": "worker 在导入 pyarrow/csv/parquet/ipc/compute/psutil、设置单线程，并显式导入 pyarrow.dataset 等已定位惰性模块之后、正式读取之前的 RSS。",
+    "rss_end_bytes": "读取结束后、仍持有 Table、开始摘要之前的 RSS。",
+    "rss_end_delta_bytes": "rss_end_bytes - rss_baseline_bytes，最直接可解释的驻留增量。",
+    "sampled_peak_rss_bytes": "父进程仅在读窗口（发出 GO 之后到收到 READ_DONE，此时 Table 仍被持有、摘要未开始）轮询子进程 RSS 得到的最大值；间隔约 2 ms，可能漏掉短尖峰，样本少时误差更明显。不是硬件级峰值，也不包含摘要或校验。",
+    "ru_maxrss_bytes": "Linux getrusage(RUSAGE_SELF).ru_maxrss（按 KB×1024 换算），在读取结束、摘要开始之前记录。这是截至该时刻的进程生命周期高水位，包含 import 与分配器保留，不是把基线清零之后的读取峰值，也不等于 sampled_peak。",
+    "ru_maxrss_after_digest_bytes": "摘要完成后再读一次 ru_maxrss，同样是生命周期高水位，可能高于读后值。",
+    "table_nbytes": "投影后 Table 内所选列 buffer 的逻辑字节，不是整个进程 RSS，也不是原文件大小。",
+    "column_projection": "比较的是读 API 选择列之后的物化耗时和内存。不声称实际磁盘或 OS 读取字节减少；热缓存下也不把进程 read_bytes 当成读取请求量。CSV 仍扫描整份文本；IPC 是否减少真实 IO 本实验未测。",
+    "rss_sampler_cost": "采样由父进程读 /proc，不在 worker 计时路径中加线程。对 worker 墙钟影响很小，但采样本身有父进程轮询开销，也不能保证捕到所有尖峰。",
+    "init_exclusion_limit": "已把 pq.read_table 路径上定位到的 dataset 等惰性模块移出计时区和基线之前；未排除分配器、页缓存、动态内核初始化，以及其他未排查到的惰性路径。"
+  },
+  "output": {
+    "summary_json": "/root/data-formats-lab/results/warm-03-col/summary.json",
+    "trials_csv": "/root/data-formats-lab/results/warm-03-col/trials.csv"
+  }
+}

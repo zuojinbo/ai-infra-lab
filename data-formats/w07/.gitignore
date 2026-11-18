@@ -1,0 +1,7 @@
+# Local environment and generated data
+.venv/
+__pycache__/
+*.py[cod]
+/data/
+# Retests may include large derived Parquet files; historical JSON lives in benchmarks/
+/results/
